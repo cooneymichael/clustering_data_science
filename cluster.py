@@ -5,16 +5,18 @@ import random
 from quickselect import floyd_rivest as fr
 
 class Clusters:
-    def __init__(self, k, iterations, distance_matrix):
+    def __init__(self, k, distance_matrix):
+        # might not use iterations internally - consider removing
+
         self.num_clusters = k
-        self.iterations = iterations
+        # self.iterations = iterations
         self.distance_matrix = distance_matrix
         self.centers = np.ndarray(shape=(self.num_clusters, 1), dtype=int)
+        self.centers = np.append(self.centers, [[] for i in range(self.num_clusters)])
         self.previous_centers = []
         self.cluster_list = []
         self.global_cluster_list = []
-        for i in range(num_clusters):
-            self.centers.append([])
+        for i in range(self.num_clusters):
             self.global_cluster_list.append([])
 
     def get_cluster_list(self):
@@ -24,6 +26,7 @@ class Clusters:
         return self.cluster_list
 
     def set_cluster_list(self, new_list):
+        # why am I allowing this?
         """ 
         allow the user to set the cluster list
         """
@@ -38,14 +41,16 @@ class Clusters:
         for i in self.centers:
             local_cluster_list.append([])
 
-        for i in range(len(dists)):
+        for i in range(len(self.distance_matrix)):
             temp_list = [0] * len(local_cluster_list)
             for j in range(len(self.centers)):
-                if i == self.centers[j][0]:
+                # if i == self.centers[j][0]:
+                if i == self.centers[j]:
                     # guarantee that a center gets assigned to its cluster
                     temp_list[j] = -100
                 else:
-                    temp_list[j] = self.distance_matrix[i][self.centers[j][0]]
+                    # temp_list[j] = self.distance_matrix[i][self.centers[j][0]]
+                    temp_list[j] = self.distance_matrix[i][int(self.centers[j])]
             index = np.argmin(temp_list)
             local_cluster_list[index].append(i)
         return local_cluster_list
@@ -56,27 +61,29 @@ class Clusters:
         """
         for i in range(len(self.centers)):
             center_i = random.randint(0, 162)
-            while center_i in rand_nums[:, 0]:
+            #while center_i in self.centers[:, 0]:
+            while center_i in self.centers:
                 center_i = random.randint(0,162)
-            self.centers[i][0] = center_i
+            # self.centers[i][0] = center_i
+            self.centers[i] = center_i
 
     def set_new_centers(self):
         """
         find new centers using the current iteration of clusters and their dissimilarity
         """
-        new_centers_wrt_clusters = np.ndarray(shape=(num_clusters,1), dtype=int)
+        new_centers_wrt_clusters = np.ndarray(shape=(self.num_clusters,1), dtype=int)
         for i in range(len(new_centers_wrt_clusters)):
             new_centers_wrt_clusters[i][0] = 0
 
         # find the average dissimilarity within clusters
-        distance_list = [[]] * self.num_clusters
+        distance_list = [[] for i in range(self.num_clusters)]
         for k in range(len(self.cluster_list)):
             for i in range(len(self.cluster_list[k])):
                 dis_sum = 0
                 for j in range(len(self.cluster_list[k])):
                     dis_sum += self.distance_matrix[i][j]
                 distance_list[k].append(dis_sum)
-
+                
         # find new centers and assign them to a matrix
         for i in range(len(distance_list)):
             median = fr.nth_largest(distance_list[i], len(distance_list[i])//2)
@@ -85,7 +92,8 @@ class Clusters:
 
         for i in range(len(self.centers)):
             index = new_centers_wrt_clusters[i][0]
-            self.centers[i][0] = self.cluster_list[i][index]
+            self.centers[i] = self.cluster_list[i][index]
+            
 
 
     
