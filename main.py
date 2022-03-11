@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from collections import Counter
 import math
+import matplotlib.pyplot as plt
 
 # read the csv file and remove undesired columns
 def extract_csv(file_name):
@@ -104,7 +105,8 @@ def main():
     global_center_list = []
 
     for outer_index in range(5):
-        cluster = cl.Clusters(3, jaccard_dis)
+        num_clusters = 3
+        cluster = cl.Clusters(num_clusters, jaccard_dis)
 
         cluster.set_random_centers()
         cluster_list = cluster.assign_clusters()
@@ -140,15 +142,58 @@ def main():
                 
             if Counter(sentinel_list)[True] >= 2:
                 global_sim_list.append(sim_list_2)
-                global_cluster_list.append(cluster_list)
+                # global_cluster_list.append(cluster_list)
+                global_cluster_list.append(cluster)
                 # global_center_list.append(new_centers)
                 print("DONE")
                 break
             else:
                 previous_iteration = cluster_list
-                
-        print(global_cluster_list)
-            
 
+        # end while loop
+    # end for loop
+    # print(global_cluster_list)
+    # find the best set of clusters, i.e. most similar
+    for i in range(len(global_sim_list)):
+        global_sim_list[i] = sum(global_sim_list[i])
+    best_index = np.argmax(global_sim_list)
+    cluster_list = global_cluster_list[best_index].get_cluster_list()
+    print(len(cluster_list))
+
+    # make some heat maps
+    heat_map_lists = [[] for i in range(num_clusters)]
+    for i in range(num_clusters):
+        for j in range(len(cluster_list[i])):
+            heat_map_lists[i].append(hist1_data_frame.iloc[:, cluster_list[i][j]])
+
+    # create and config our plots
+    fig, ((ax0, ax1, ax2, ax3),(ax4, ax5, ax6, ax7)) = plt.subplots(nrows=2, ncols=4)
+    plt.style.use('bmh')
+    plt.tight_layout()
+
+    # heat maps
+    im0 = ax0.imshow(heat_map_lists[0], cmap='binary_r', interpolation='none')
+    cbar0 = ax0.figure.colorbar(im0, ax=ax0)
+    ax0.set_aspect('auto')
+    ax0.set_title('Cluster 1 Similarity')
+
+    im1 = ax1.imshow(heat_map_lists[1], cmap='binary_r', interpolation='none')
+    cbar1 = ax0.figure.colorbar(im1, ax=ax1)
+    ax1.set_aspect('auto')
+    ax0.set_title('Cluster 2 Similarity')
+
+    im2 = ax2.imshow(heat_map_lists[2], cmap='binary_r', interpolation='none')
+    cbar2 = ax0.figure.colorbar(im2, ax=ax2)
+    ax2.set_aspect('auto')
+    ax0.set_title('Cluster 3 Similarity')
+
+    # plt.show()
+    
+
+    
+
+
+    
+    
 
 main()        
