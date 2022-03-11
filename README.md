@@ -2,6 +2,24 @@
 
 ---
 
+
+
+TODO:
+
+- [x] Rewrite clustering algorithm in an object oriented way
+- [] Rethink clustering algorithm to prevent occasional stalls (infinite loops)
+  - this is rare unless outer_index is set to a large number, which would be preferred
+- [] Rethink how radial positions are calculated
+  - I think they're calculated naively, and they're always the same
+- [] Review algorithm and potentially improve time complexities
+- [] Consider writing class for radar charts/graphs in general
+
+
+
+---
+
+
+
 ## This code was written by Michael Cooney (MC509119@ohio.edu)
 
 The data set for this class can be found [here](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE64881) as a text file.  It was [published in the journal nature](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5366070/#!po=5.27638) in 2017.  It is the result of a new genome mapping technique developed by researches, called Genomic Architecture Mapping (GAM).
