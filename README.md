@@ -7,12 +7,12 @@
 TODO:
 
 - [x] Rewrite clustering algorithm in an object oriented way
-- [] Rethink clustering algorithm to prevent occasional stalls (infinite loops)
+- [ ] Rethink clustering algorithm to prevent occasional stalls (infinite loops)
   - this is rare unless outer_index is set to a large number, which would be preferred
-- [] Rethink how radial positions are calculated
+- [ ] Rethink how radial positions are calculated
   - I think they're calculated naively, and they're always the same
-- [] Review algorithm and potentially improve time complexities
-- [] Consider writing class for radar charts/graphs in general
+- [ ] Review algorithm and potentially improve time complexities
+- [ ] Consider writing class for radar charts/graphs in general
 
 
 
