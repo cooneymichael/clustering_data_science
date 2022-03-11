@@ -84,6 +84,32 @@ def counter_cosine_similarity(c1, c2):
     magB = math.sqrt(sum(c2.get(k, 0)**2 for k in terms))
     return dotprod / (magA * magB)
 
+
+def determine_radial_positions(data_frame):
+    # sum up the columns
+    temp = data_frame.agg('sum', axis=0)
+    np_tuples = []
+    for i in range(temp.size):
+        np_tuples.append((temp[i], data_frame.columns[i]))
+
+    # create list that tags each np with a label, marking its location in the nucleus
+    radial_positions = []
+    for i in np_tuples:
+        if i[0] >= 326:
+            radial_positions.append((i[0], 'strongly equatorial'))
+        elif i[0] >= 244:
+            radial_positions.append((i[0], 'somewhat equatorial'))
+        elif i[0] >= 163:
+            radial_positions.append((i[0], 'neither apical nor equatorial'))
+        elif i[0] >= 81:
+            radial_positions.append((i[0], 'somewhat apical'))
+        else:
+            radial_positions.append((i[0], 'strongly apical'))
+
+    return radial_positions
+
+
+
 def main():
     indexed, data = extract_csv('./CSVs/HIST1.csv')
     hist1_data = extract_data('sum', 0, data)
@@ -145,7 +171,7 @@ def main():
                 # global_cluster_list.append(cluster_list)
                 global_cluster_list.append(cluster)
                 # global_center_list.append(new_centers)
-                print("DONE")
+                print("DONE ", outer_index)
                 break
             else:
                 previous_iteration = cluster_list
@@ -178,14 +204,14 @@ def main():
     ax0.set_title('Cluster 1 Similarity')
 
     im1 = ax1.imshow(heat_map_lists[1], cmap='binary_r', interpolation='none')
-    cbar1 = ax0.figure.colorbar(im1, ax=ax1)
+    cbar1 = ax1.figure.colorbar(im1, ax=ax1)
     ax1.set_aspect('auto')
-    ax0.set_title('Cluster 2 Similarity')
+    ax1.set_title('Cluster 2 Similarity')
 
     im2 = ax2.imshow(heat_map_lists[2], cmap='binary_r', interpolation='none')
-    cbar2 = ax0.figure.colorbar(im2, ax=ax2)
+    cbar2 = ax2.figure.colorbar(im2, ax=ax2)
     ax2.set_aspect('auto')
-    ax0.set_title('Cluster 3 Similarity')
+    ax2.set_title('Cluster 3 Similarity')
 
 
     # Making radar chart
@@ -314,7 +340,44 @@ def main():
 
 
     # plotting radial positions of each cluster
-    # todo
+    entire_genome = pd.read_csv('CSVs/data_set.csv', sep=',')
+    if 'Unnamed' in entire_genome.columns[0]:
+        entire_genome = entire_genome.iloc[:, 4:]
+    else:
+        entire_genome = entire_genome.iloc[:, 3:]
+
+    
+    radial_positions = determine_radial_positions(entire_genome)
+    radial_position_percents = [ [0,0,0,0,0] for i in cluster_list ]
+    for i in range(len(cluster_list)):
+        for j in range(len(cluster_list[i])):
+            if radial_positions[cluster_list[i][j]][1] == 'strongly apical':
+                radial_position_percents[i][0] += 1
+            elif radial_positions[cluster_list[i][j]][1] == 'somewhat apical':
+                radial_position_percents[i][1] += 1
+            elif radial_positions[cluster_list[i][j]][1] == 'neither apical nor equatorial':
+                radial_position_percents[i][2] += 1
+            elif radial_positions[cluster_list[i][j]][1] == 'somewhat equatorial':
+                radial_position_percents[i][3] += 1
+            elif radial_positions[cluster_list[i][j]][1] == 'strongly equatorial':
+                radial_position_percents[i][4] += 1
+        for j in range(len(radial_position_percents[i])):
+            radial_position_percents[i][j] /= len(cluster_list[i])
+
+    x_axis = ['strongly\n apical', 'somewhat\n apical', 'neither', 'somewhat\n equatorial', 'strongly\n equatorial']
+
+    for i in radial_position_percents:
+        ax3.bar(x_axis, i, alpha=0.7, width=0.5)
+        ax3.grid(color='#95a5a6', linestyle='--', linewidth=2, axis='y', alpha=0.7)
+        ax3.set_title('Cluster 1')
+
+        ax4.bar(x_axis, i, alpha=0.7, width=0.5)
+        ax4.grid(color='#95a5a6', linestyle='--', linewidth=2, axis='y', alpha=0.7)
+        ax4.set_title('Cluster 2')
+
+        ax5.bar(x_axis, i, alpha=0.7, width=0.5)
+        ax5.grid(color='#95a5a6', linestyle='--', linewidth=2, axis='y', alpha=0.7)
+        ax5.set_title('Cluster 3')
 
 
     plt.show()
