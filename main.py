@@ -167,7 +167,7 @@ def main():
             heat_map_lists[i].append(hist1_data_frame.iloc[:, cluster_list[i][j]])
 
     # create and config our plots
-    fig, ((ax0, ax1, ax2, ax3),(ax4, ax5, ax6, ax7)) = plt.subplots(nrows=2, ncols=4)
+    fig, ((ax0, ax1, ax2),(ax3, ax4, ax5)) = plt.subplots(nrows=2, ncols=3)
     plt.style.use('bmh')
     plt.tight_layout()
 
@@ -187,10 +187,138 @@ def main():
     ax2.set_aspect('auto')
     ax0.set_title('Cluster 3 Similarity')
 
-    # plt.show()
-    
 
+    # Making radar chart
+    # adding to the script: box plots and hist1 vs lads
+    # chr13: 21,690,000-24,120,000
+    feature_table = pd.read_csv('CSVs/Hist1_region_features.csv', sep=',')
+    columns_of_interest = \
+        ["Hist1", "Vmn", "LAD", "RNAPII-S2P", "RNAPII-S5P", "RNAPII-S7P", "Enhancer", "H3K9me3", "H3K20me3", "h3k27me3", "H3K36me3", "NANOG", "pou5f1", "sox2", "CTCF-7BWU"]
+    feature_lists = [[] for i in columns_of_interest]
+    indexed_hist1_data_frame = indexed.loc[:, columns_indexed]
+
+    # cycle thru feature table and find windows that contain each column of interest 
+    for i in range(len(columns_of_interest)):
+        for j in feature_table.loc[:, [columns_of_interest[i], 'name']].values:
+            if j[0] >= 1:
+                feature_lists[i].append(j[1][6:14])
+
+        # cycle through data frame and get corresponding windows, without all info
+    interest_lists = [[] for i in columns_of_interest]
+    for i in indexed_hist1_data_frame.loc[:, ' start'].values:
+        if str(i) in feature_lists[0]:
+            interest_lists[0].append(i)
+
+        if str(i) in feature_lists[1]:
+            interest_lists[1].append(i)
+
+        if str(i) in feature_lists[2]:
+            interest_lists[2].append(i)
+
+        if str(i) in feature_lists[3]:
+            interest_lists[3].append(i)
+
+        if str(i) in feature_lists[4]:
+            interest_lists[4].append(i)
+
+        if str(i) in feature_lists[5]:
+            interest_lists[5].append(i)
+
+        if str(i) in feature_lists[6]:
+            interest_lists[6].append(i)
+
+        if str(i) in feature_lists[7]:
+            interest_lists[7].append(i)
+
+        if str(i) in feature_lists[8]:
+            interest_lists[8].append(i)
+
+        if str(i) in set(feature_lists[9]):
+            interest_lists[9].append(i)
+
+        if str(i) in feature_lists[10]:
+            interest_lists[10].append(i)
+
+        if str(i) in feature_lists[11]:
+            interest_lists[11].append(i)
+
+        if str(i) in feature_lists[12]:
+            interest_lists[12].append(i)
+
+        if str(i) in feature_lists[13]:
+            interest_lists[13].append(i)
+
+        if str(i) in feature_lists[14]:
+            interest_lists[14].append(i)
+
+    # get all dataframe information related to necessary windows
+    percentage_frames = []
+    for i in interest_lists:
+        percentage_frames.append(indexed_hist1_data_frame[indexed_hist1_data_frame[' start'].isin(i)])
     
+    # make nested lists (num_cluster lists * 15)
+    cluster_percents = [ [[],[],[]] for i in columns_of_interest]
+
+    for k in range(15):
+        for i in range(len(cluster_list)):
+            for j in range(len(cluster_list[i])):
+                # add 4 to value because first 4 columns are various indices
+                cluster_percents[k][i].append(
+                    percentage_frames[k].iloc[:, cluster_list[i][j] + 4].astype(bool).sum() / len(percentage_frames[k].index)
+                )
+
+
+    mean_percents = [[] for i in range(num_clusters)]
+    for i in range(len(cluster_percents)):
+        mean_percents[0].append(np.mean(cluster_percents[i][0]))
+        mean_percents[1].append(np.mean(cluster_percents[i][1]))
+        mean_percents[2].append(np.mean(cluster_percents[i][2]))
+
+
+    # plotting cluster 1 on radar chart
+    mean_percents[0] += mean_percents[0][:1]
+    angles = np.linspace(0,2 * np.pi, len(columns_of_interest), endpoint=False).tolist()
+    angles += angles[:1]
+
+    fix, ax6 = plt.subplots(figsize=(15,15), subplot_kw = dict(polar=True))
+
+    # ax6 = fig.add_axes([0.6,0.1,0.4,0.4], polar=True)
+    ax6.grid(color='#4c4c4c')
+    ax6.set_theta_offset(np.pi / 2)
+    ax6.set_theta_direction(-1)
+    ax6.set_thetagrids(np.degrees(angles[0:len(angles)-1]), columns_of_interest)
+    for label, angle in zip(ax6.get_xticklabels(), angles):
+        if angle in (0,np.pi):
+            label.set_horizontalalignment('center')
+        elif 0 < angle < np.pi:
+            label.set_horizontalalignment('left')
+        else:
+            label.set_horizontalalignment('right')
+
+    ax6.plot(angles, mean_percents[0], color='red', linewidth=1, label='Cluster 1')
+    ax6.fill(angles, mean_percents[0], color='red', alpha=0.25)
+
+    # plotting cluster 2 radar
+    mean_percents[1] += mean_percents[1][:1]
+    ax6.plot(angles, mean_percents[1], color='blue', linewidth=1, label='Cluster 2')
+    ax6.fill(angles, mean_percents[1], color='blue', alpha=0.25)
+
+    # plotting cluster 3 radar
+    mean_percents[2] += mean_percents[2][:1]
+    ax6.plot(angles, mean_percents[2], color='yellow', linewidth=1, label='Cluster 3')
+    ax6.fill(angles, mean_percents[2], color='yellow', alpha=0.25)
+
+    # other elements of the chart
+    ax6.set_title('Regions of Interest Across Clusters', y=1.08)
+    ax6.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
+
+
+    # plotting radial positions of each cluster
+    # todo
+
+
+    plt.show()
+
 
 
     
